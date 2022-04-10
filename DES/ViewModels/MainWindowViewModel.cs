@@ -21,6 +21,7 @@ namespace DES.Client.ViewModels
         private string _enteredText;
         private string _encryptedText;
         private string _decryptedText;
+        private byte[] _encryptedBytes;
         public string InFilePath { get; set; }
         public string OutFilePath { get; set; }
 
@@ -74,14 +75,17 @@ namespace DES.Client.ViewModels
         {
             MessageBox.Show("Зашифровано");
             FeistelNetwork network = new FeistelNetwork(new KeyGenerator(),new FeistelFunc(),bytesKey);
-            EncryptedText = ASCIIEncoding.ASCII.GetString( network.Encrypt(ASCIIEncoding.ASCII.GetBytes(EnteredText)));
+            var s =ASCIIEncoding.ASCII.GetBytes(EnteredText);
+            _encryptedBytes = network.Encrypt(s);
+            EncryptedText = ASCIIEncoding.ASCII.GetString(_encryptedBytes);
             //EncryptedText = EncryptReady(EnteredText);
         }
         private void Decrypt()
         {
             MessageBox.Show("Расшифровано");
             FeistelNetwork network = new FeistelNetwork(new KeyGenerator(), new FeistelFunc(), bytesKey);
-            DecryptedText = ASCIIEncoding.ASCII.GetString(network.Encrypt(ASCIIEncoding.ASCII.GetBytes(EncryptedText)));
+            var d = network.Decrypt(_encryptedBytes);
+            DecryptedText = ASCIIEncoding.ASCII.GetString(d);
             //DecryptedText = DecryptReady(EncryptedText);
         }
         private void OpenFile()

@@ -30,9 +30,9 @@ namespace MyDES
                 R[i-4]=data[i];
             }
             var L = data;
-            for(int i = 0; i < 16; i++)
+            for(int i = 0; i < 1; i++)
             {
-                var extra=AuxiliaryFunctions.XOR(_function.FeistelFunction(R, _keys[i]),L);
+                var extra=AuxiliaryFunctions.XOR(_function.FeistelFunction(R, _keys[0]),L);
                 L = R;
                 R = extra;
             }
@@ -41,11 +41,11 @@ namespace MyDES
             {
                 if (i >= 4)
                 {
-                    result[i] = L[i];
+                    result[i] = R[i-4];
                 }
                 else
                 {
-                    result[i] = R[i];
+                    result[i] = L[i];
                 }
             }
             result = AuxiliaryFunctions.Permutation(result, Constants.IPReverse);
@@ -56,11 +56,15 @@ namespace MyDES
         {
             data = AuxiliaryFunctions.Permutation(data, Constants.IP);
             var R = new byte[data.Length / 2];
-            data.CopyTo(R, 4);
-            var L = data;
-            for (int i = 0; i < 16; i++)
+
+            for (int i = 4; i < 8; i++)
             {
-                var extra = AuxiliaryFunctions.XOR(_function.FeistelFunction(L, _keys[15-i]), R);
+                R[i - 4] = data[i];
+            }
+            var L = data;
+            for (int i = 0; i < 1; i++)
+            {
+                var extra = AuxiliaryFunctions.XOR(_function.FeistelFunction(L, _keys[0]), R);
                 R = L;
                 L = extra;
             }
@@ -69,11 +73,11 @@ namespace MyDES
             {
                 if (i >= 4)
                 {
-                    result[i] = L[i];
+                    result[i] = R[i-4];
                 }
                 else
                 {
-                    result[i] = R[i];
+                    result[i] = L[i];
                 }
             }
             result = AuxiliaryFunctions.Permutation(result, Constants.IPReverse);
