@@ -11,14 +11,13 @@ namespace MyDES
         public  byte[][] GetKeys(byte[] key);
     }
 
-    public interface IEncryptBlock
+    public interface IFeistelFunction
     {
-        public byte[] EncryptBlock(byte[] keyi);
+        public byte[] FeistelFunction(byte[] block,byte[] keyi);
     }
 
     public interface ICrypto
     {
-        public byte[] Key{ get; set;}
         public byte[] Encrypt(byte[] data);
 
         public byte[] Decrypt(byte[] data);

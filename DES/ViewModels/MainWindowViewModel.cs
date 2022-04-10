@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using Wpf.Core;
+using MyDES;
 
 namespace DES.Client.ViewModels
 {
@@ -20,9 +21,10 @@ namespace DES.Client.ViewModels
         private string _enteredText;
         private string _encryptedText;
         private string _decryptedText;
-        public string FilePath { get; set; }
+        public string InFilePath { get; set; }
+        public string OutFilePath { get; set; }
 
-        static byte[] bytes = ASCIIEncoding.ASCII.GetBytes("ZeroCool");
+        static byte[] bytesKey = ASCIIEncoding.ASCII.GetBytes("mityamu");
         public MainWindowViewModel()
         {
 
@@ -71,21 +73,39 @@ namespace DES.Client.ViewModels
         private void Encrypt()
         {
             MessageBox.Show("Зашифровано");
-            EncryptedText = EncryptReady(EnteredText);
+            FeistelNetwork network = new FeistelNetwork(new KeyGenerator(),new FeistelFunc(),bytesKey);
+            EncryptedText = ASCIIEncoding.ASCII.GetString( network.Encrypt(ASCIIEncoding.ASCII.GetBytes(EnteredText)));
+            //EncryptedText = EncryptReady(EnteredText);
         }
         private void Decrypt()
         {
             MessageBox.Show("Расшифровано");
-            DecryptedText = DecryptReady(EncryptedText);
+            FeistelNetwork network = new FeistelNetwork(new KeyGenerator(), new FeistelFunc(), bytesKey);
+            DecryptedText = ASCIIEncoding.ASCII.GetString(network.Encrypt(ASCIIEncoding.ASCII.GetBytes(EncryptedText)));
+            //DecryptedText = DecryptReady(EncryptedText);
         }
-
         private void OpenFile()
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             if (openFileDialog.ShowDialog() == true)
             {
-                FilePath = openFileDialog.FileName;
+                InFilePath = openFileDialog.FileName;
             }
+            SaveFileDialog saveFileDialog=new SaveFileDialog();
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                OutFilePath = saveFileDialog.FileName;
+            }
+
+
+
+
+
+
+
+
+
+
 
 
         }
@@ -101,7 +121,7 @@ namespace DES.Client.ViewModels
            
             DESCryptoServiceProvider cryptoProvider = new DESCryptoServiceProvider();
             MemoryStream memoryStream = new MemoryStream();
-            CryptoStream cryptoStream = new CryptoStream(memoryStream,cryptoProvider.CreateEncryptor(bytes, bytes), CryptoStreamMode.Write);
+            CryptoStream cryptoStream = new CryptoStream(memoryStream,cryptoProvider.CreateEncryptor(bytesKey, bytesKey), CryptoStreamMode.Write);
             StreamWriter writer = new StreamWriter(cryptoStream);
             writer.Write(originalString);
             writer.Flush();
@@ -120,7 +140,7 @@ namespace DES.Client.ViewModels
             MemoryStream memoryStream = new MemoryStream
                     (Convert.FromBase64String(cryptedString));
             CryptoStream cryptoStream = new CryptoStream(memoryStream,
-                cryptoProvider.CreateDecryptor(bytes, bytes), CryptoStreamMode.Read);
+                cryptoProvider.CreateDecryptor(bytesKey, bytesKey), CryptoStreamMode.Read);
             StreamReader reader = new StreamReader(cryptoStream);
             return reader.ReadToEnd();
         }
