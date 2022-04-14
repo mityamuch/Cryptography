@@ -11,7 +11,7 @@ namespace MyDES
         public static byte[] Permutation(byte[] block, int[] Pblock)
         {
             byte[] result = new byte[8];
-            int curind = 0;
+            int curind = 1;
             foreach (int i in Pblock)
             {
                 SetBit(result, GetBit(block, i), curind);

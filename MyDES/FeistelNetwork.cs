@@ -30,9 +30,9 @@ namespace MyDES
                 R[i-4]=data[i];
             }
             var L = data;
-            for(int i = 0; i < 1; i++)
+            for(int i = 0; i < 16; i++)
             {
-                var extra=AuxiliaryFunctions.XOR(_function.FeistelFunction(R, _keys[0]),L);
+                var extra=AuxiliaryFunctions.XOR(_function.FeistelFunction(R, _keys[i]),L);
                 L = R;
                 R = extra;
             }
@@ -62,9 +62,9 @@ namespace MyDES
                 R[i - 4] = data[i];
             }
             var L = data;
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 16; i++)
             {
-                var extra = AuxiliaryFunctions.XOR(_function.FeistelFunction(L, _keys[0]), R);
+                var extra = AuxiliaryFunctions.XOR(_function.FeistelFunction(L, _keys[15-i]), R);
                 R = L;
                 L = extra;
             }

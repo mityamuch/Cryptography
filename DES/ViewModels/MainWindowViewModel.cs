@@ -2,7 +2,6 @@
 using Microsoft.Win32;
 using System;
 using System.IO;
-using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
@@ -13,6 +12,7 @@ namespace DES.Client.ViewModels
 {
     internal class MainWindowViewModel : ViewModelBase
     {
+        #region Fields
         private ICommand _encryptCommand ;
         private ICommand _decryptCommand ;
 
@@ -25,11 +25,15 @@ namespace DES.Client.ViewModels
         public string InFilePath { get; set; }
         public string OutFilePath { get; set; }
 
-        static byte[] bytesKey = ASCIIEncoding.ASCII.GetBytes("mityamu");
+        
+        private static byte[] bytesKey = ASCIIEncoding.ASCII.GetBytes("mityamu");
+        private DesСontext DES = new DesСontext(bytesKey, Mode.ECB);
+        #endregion
         public MainWindowViewModel()
         {
 
         }
+        #region Properties
         public string EnteredText
         {
             get =>
@@ -63,7 +67,8 @@ namespace DES.Client.ViewModels
                 OnPropertyChanged(nameof(DecryptedText));
             }
         }
-
+        #endregion
+        #region Commands
         public ICommand EncryptCommand =>
             _encryptCommand ??= new RelayCommand(_ => Encrypt());
         public ICommand DecryptCommand =>
@@ -73,20 +78,16 @@ namespace DES.Client.ViewModels
 
         private void Encrypt()
         {
-            MessageBox.Show("Зашифровано");
-            FeistelNetwork network = new FeistelNetwork(new KeyGenerator(),new FeistelFunc(),bytesKey);
             var s =ASCIIEncoding.ASCII.GetBytes(EnteredText);
-            _encryptedBytes = network.Encrypt(s);
+            _encryptedBytes = DES.Encrypt(s);
             EncryptedText = ASCIIEncoding.ASCII.GetString(_encryptedBytes);
-            //EncryptedText = EncryptReady(EnteredText);
+            MessageBox.Show("Зашифровано");
         }
         private void Decrypt()
         {
-            MessageBox.Show("Расшифровано");
-            FeistelNetwork network = new FeistelNetwork(new KeyGenerator(), new FeistelFunc(), bytesKey);
-            var d = network.Decrypt(_encryptedBytes);
+            var d = DES.Decrypt(_encryptedBytes);
             DecryptedText = ASCIIEncoding.ASCII.GetString(d);
-            //DecryptedText = DecryptReady(EncryptedText);
+            MessageBox.Show("Расшифровано");
         }
         private void OpenFile()
         {
@@ -100,53 +101,35 @@ namespace DES.Client.ViewModels
             {
                 OutFilePath = saveFileDialog.FileName;
             }
-
-
-
-
-
-
-
-
-
-
-
-
-        }
-
-
-        public static string EncryptReady(string originalString)
-        {
-            if (String.IsNullOrEmpty(originalString))
+            using (BinaryReader reader = new BinaryReader(File.Open(InFilePath, FileMode.Open)))
             {
-                throw new ArgumentNullException
-                       ("The string which needs to be encrypted can not be null.");
+                string name = reader.ReadString();
+
             }
-           
-            DESCryptoServiceProvider cryptoProvider = new DESCryptoServiceProvider();
-            MemoryStream memoryStream = new MemoryStream();
-            CryptoStream cryptoStream = new CryptoStream(memoryStream,cryptoProvider.CreateEncryptor(bytesKey, bytesKey), CryptoStreamMode.Write);
-            StreamWriter writer = new StreamWriter(cryptoStream);
-            writer.Write(originalString);
-            writer.Flush();
-            cryptoStream.FlushFinalBlock();
-            writer.Flush();
-            return Convert.ToBase64String(memoryStream.GetBuffer(), 0, (int)memoryStream.Length);
-        }
-        public static string DecryptReady(string cryptedString)
-        {
-            if (String.IsNullOrEmpty(cryptedString))
+            using(BinaryWriter writer = new BinaryWriter(File.Open(OutFilePath+"Encrypted", FileMode.OpenOrCreate)))
             {
-                throw new ArgumentNullException
-                   ("The string which needs to be decrypted can not be null.");
+                    writer.Write("");
             }
-            DESCryptoServiceProvider cryptoProvider = new DESCryptoServiceProvider();
-            MemoryStream memoryStream = new MemoryStream
-                    (Convert.FromBase64String(cryptedString));
-            CryptoStream cryptoStream = new CryptoStream(memoryStream,
-                cryptoProvider.CreateDecryptor(bytesKey, bytesKey), CryptoStreamMode.Read);
-            StreamReader reader = new StreamReader(cryptoStream);
-            return reader.ReadToEnd();
+
+            using (BinaryWriter writer = new BinaryWriter(File.Open(OutFilePath + "Deccrypted", FileMode.OpenOrCreate)))
+            {
+                using (BinaryReader reader = new BinaryReader(File.Open(OutFilePath + "Encrypted", FileMode.Open)))
+                {
+                    string name = reader.ReadString();
+
+
+
+
+
+
+                }
+            }
+
+
         }
+
+
+        #endregion 
     }
+
 }

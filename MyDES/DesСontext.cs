@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace MyDES
 {
     
-    enum Mode{
+    public enum Mode{
         ECB,
         CBC,
         CFB,
@@ -17,67 +17,151 @@ namespace MyDES
         RDH
     };
     
-    internal class DesСontext
+    public class DesСontext
     {
         private byte[] _key;
         private Mode _mode;
+        private FeistelNetwork _network;
 
         public DesСontext(byte[] key,Mode mode, params object[] options) 
         { 
             _key = key;
             _mode = mode;
+            _network = new FeistelNetwork(new KeyGenerator(), new FeistelFunc(), _key);
         }
 
-        public byte[] Encrypt(byte[] Indata, byte[] Outdata) 
+        public byte[] Encrypt(byte[] Indata) 
         {
-            if (Indata.Length % 8 != 0)
+
+
+            var eIndata = new byte[Indata.Length + 8- (Indata.Length % 8)];
+            byte[] Outdata = new byte[eIndata.Length];
+            int lastind=0;
+            for(lastind = 0; lastind < Indata.Length; lastind++)
             {
-                Indata.Append((byte)0x80);
-                while (Indata.Length % 8 != 0)
-                {
-                    Indata.Append((byte)0);
-                }
+                eIndata[lastind] = Indata[lastind]; 
             }
-            else
+            eIndata[lastind]=(byte)0x80;
+
+            switch (_mode)
             {
-                Indata.Append((byte)0x80);
-                for(int i=0;i<7;i++)
-                {
-                    Indata.Append((byte)0);
-                }
-            }
-            FeistelNetwork network = new FeistelNetwork(new KeyGenerator(), new FeistelFunc(), _key);
-            byte[] block=new byte[8];
-            int posinblock=0;
-            int posinOutdata=0;
-            for(int i = 0; i < Indata.Length; i++)
-            {
-                block[posinblock] = Indata[i];
-                posinblock++;
-                if (posinblock == 8)
-                {
-                    posinblock = 0;
-                    block=network.Encrypt(block);
-                    foreach(byte b in block)
+                case Mode.ECB:
                     {
-                        Outdata[posinOutdata] = b;
-                        posinOutdata++;
+                        byte[] block = new byte[8];
+                        int posinblock = 0;
+                        int posinOutData = 0;
+                        for (int i = 0; i < eIndata.Length; i++)
+                        {
+                            block[posinblock] = eIndata[i];
+                            posinblock++;
+                            if (posinblock == 8)
+                            {
+                                posinblock = 0;
+                                block = _network.Encrypt(block);
+                                foreach (byte b in block)
+                                {
+                                    Outdata[posinOutData]=b;
+                                    posinOutData++;
+
+                                }
+                            }
+                        }
                     }
-                }
+                    break;
+                case Mode.CBC:
+                    break;
+                case Mode.CFB:
+                    break;
+                case Mode.OFB:
+                    break;
+                case Mode.CTR:
+                    break;
+                case Mode.RD:
+                    break;
+                case Mode.RDH:
+                    break;
+                default:
+                    break;
+            }
+
+           
+            
+
+
+
+
+
+
+
+            return Outdata;
+        }
+
+        public byte[] Decrypt(byte[] Indata) 
+        {
+            byte[] Outdata = new byte[Indata.Length];
+            switch (_mode)
+            {
+                case Mode.ECB:
+                    {
+                        byte[] block = new byte[8];
+                        int posinblock = 0;
+                        int posinoutdata = 0;
+
+                        for (int i = 0; i < Indata.Length; i++)
+                        {
+                            block[posinblock] = Indata[i];
+                            posinblock++;
+                            if (posinblock == 8)
+                            {
+                                posinblock = 0;
+                                block = _network.Decrypt(block);
+                                foreach (byte b in block)
+                                {
+                                    Outdata[posinoutdata++] = b;
+                                }
+
+                            }
+                            
+                        }
+                    }
+                    break;
+                case Mode.CBC:
+                    break;
+                case Mode.CFB:
+                    break;
+                case Mode.OFB:
+                    break;
+                case Mode.CTR:
+                    break;
+                case Mode.RD:
+                    break;
+                case Mode.RDH:
+                    break;
+                default:
+                    break;
             }
 
 
-
-
-
-
-
-            return null;
+            return CutTail(Outdata);
         }
 
-        public byte[] Decrypt(byte[] Indata,byte[] Outdata) 
+        public byte[] CutTail(byte[] data)
         {
-            return null;
+           
+            int i;
+            for ( i= data.Length-1; i >=0; i--)
+            {
+                if(data[i] == (byte)0x80)
+                {
+                    
+                    break;
+                }
+            }
+            byte[] outdata = new byte[i];
+            for (int j = 0; j < i;j++)
+                outdata[j] = data[j];
+            return outdata;
         }
+
     }
 }
