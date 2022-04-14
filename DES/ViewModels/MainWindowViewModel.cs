@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using Wpf.Core;
 using MyDES;
+using System.Threading.Tasks;
 
 namespace DES.Client.ViewModels
 {
@@ -74,7 +75,7 @@ namespace DES.Client.ViewModels
         public ICommand DecryptCommand =>
            _decryptCommand ??= new RelayCommand(_ => Decrypt());
         public ICommand OpenFileCommand =>
-           _openfileCommand ??= new RelayCommand(_ => OpenFile());
+           _openfileCommand ??= new RelayCommand(_ => OpenFileAsync());
 
         private void Encrypt()
         {
@@ -89,7 +90,7 @@ namespace DES.Client.ViewModels
             DecryptedText = ASCIIEncoding.ASCII.GetString(d);
             MessageBox.Show("Расшифровано");
         }
-        private void OpenFile()
+        private async Task OpenFileAsync()
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             if (openFileDialog.ShowDialog() == true)
@@ -101,27 +102,33 @@ namespace DES.Client.ViewModels
             {
                 OutFilePath = saveFileDialog.FileName;
             }
-            using (BinaryReader reader = new BinaryReader(File.Open(InFilePath, FileMode.Open)))
-            {
-                string name = reader.ReadString();
 
-            }
-            using(BinaryWriter writer = new BinaryWriter(File.Open(OutFilePath+"Encrypted", FileMode.OpenOrCreate)))
-            {
-                    writer.Write("");
-            }
 
-            using (BinaryWriter writer = new BinaryWriter(File.Open(OutFilePath + "Deccrypted", FileMode.OpenOrCreate)))
+            using (StreamReader reader = new StreamReader(InFilePath))
             {
-                using (BinaryReader reader = new BinaryReader(File.Open(OutFilePath + "Encrypted", FileMode.Open)))
+                using (StreamWriter writer = new StreamWriter(OutFilePath+"Encrypted", true))
                 {
-                    string name = reader.ReadString();
+                    string? line;
+                    while ((line = await reader.ReadLineAsync()) != null)
+                    {
+                        var s = ASCIIEncoding.ASCII.GetBytes(line);
+                        var encrypted = DES.Decrypt(s);
+                        await writer.WriteLineAsync(ASCIIEncoding.ASCII.GetString(encrypted));
+                    }
+                }
 
+            }
 
-
-
-
-
+            using (StreamReader reader = new StreamReader(OutFilePath + "Encrypted"))
+            {
+                using (StreamWriter writer = new StreamWriter(OutFilePath + "Decrypted", true))
+                {
+                    string? line;
+                    while ((line = await reader.ReadLineAsync()) != null)
+                    {
+                        var s = ASCIIEncoding.ASCII.GetBytes(line);
+                        var decrypted = DES.Encrypt(s);
+                    }
                 }
             }
 
