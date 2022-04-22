@@ -16,8 +16,9 @@ namespace DES.Client.ViewModels
         #region Fields
         private ICommand _encryptCommand ;
         private ICommand _decryptCommand ;
-
         private ICommand _openfileCommand;
+
+        private readonly CipherСontext _cipherContext;
 
         private string _enteredText;
         private string _encryptedText;
@@ -26,13 +27,15 @@ namespace DES.Client.ViewModels
         public string InFilePath { get; set; }
         public string OutFilePath { get; set; }
 
-        
+       
         private static byte[] bytesKey = ASCIIEncoding.ASCII.GetBytes("mityamu");
-        private DesСontext DES = new DesСontext(bytesKey, Mode.ECB);
+        private ICrypto DESImplementation;
+
         #endregion
         public MainWindowViewModel()
         {
-
+            DESImplementation = new MyDES.DES(bytesKey);
+            _cipherContext = new CipherСontext(DESImplementation);
         }
         #region Properties
         public string EnteredText
@@ -75,18 +78,18 @@ namespace DES.Client.ViewModels
         public ICommand DecryptCommand =>
            _decryptCommand ??= new RelayCommand(_ => Decrypt());
         public ICommand OpenFileCommand =>
-           _openfileCommand ??= new RelayCommand(_ => OpenFileAsync());
+           _openfileCommand ??= new RelayCommand(async _ => await OpenFileAsync());
 
         private void Encrypt()
         {
             var s =ASCIIEncoding.ASCII.GetBytes(EnteredText);
-            _encryptedBytes = DES.Encrypt(s);
+            _encryptedBytes = _cipherContext.Encrypt(s);
             EncryptedText = ASCIIEncoding.ASCII.GetString(_encryptedBytes);
             MessageBox.Show("Зашифровано");
         }
         private void Decrypt()
         {
-            var d = DES.Decrypt(_encryptedBytes);
+            var d = _cipherContext.Decrypt(_encryptedBytes);
             DecryptedText = ASCIIEncoding.ASCII.GetString(d);
             MessageBox.Show("Расшифровано");
         }
@@ -112,7 +115,7 @@ namespace DES.Client.ViewModels
                     while ((line = await reader.ReadLineAsync()) != null)
                     {
                         var s = ASCIIEncoding.ASCII.GetBytes(line);
-                        var encrypted = DES.Decrypt(s);
+                        var encrypted = _cipherContext.Decrypt(s);
                         await writer.WriteLineAsync(ASCIIEncoding.ASCII.GetString(encrypted));
                     }
                 }
@@ -127,7 +130,7 @@ namespace DES.Client.ViewModels
                     while ((line = await reader.ReadLineAsync()) != null)
                     {
                         var s = ASCIIEncoding.ASCII.GetBytes(line);
-                        var decrypted = DES.Encrypt(s);
+                        var decrypted = _cipherContext.Encrypt(s);
                     }
                 }
             }

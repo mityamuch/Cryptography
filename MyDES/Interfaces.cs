@@ -6,14 +6,15 @@ using System.Threading.Tasks;
 
 namespace MyDES
 {
+
     public interface IExpandKey
     {
-        public  byte[][] GetKeys(byte[] key);
+        public byte[][] GetKeys(byte[] key);
     }
 
     public interface IFeistelFunction
     {
-        public byte[] FeistelFunction(byte[] block,byte[] keyi);
+        public byte[] FeistelFunction(byte[] block, byte[] keyi);
     }
 
     public interface ICrypto
@@ -24,5 +25,3 @@ namespace MyDES
     }
 
 }
-
-

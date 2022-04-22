@@ -7,33 +7,34 @@ using System.Threading.Tasks;
 namespace MyDES
 {
     
-    public enum Mode{
-        ECB,
-        CBC,
-        CFB,
-        OFB,
-        CTR,
-        RD,
-        RDH
-    };
-    
-    public class DesСontext
+    public partial class CipherСontext
     {
-        private byte[] _key;
-        private Mode _mode;
-        private FeistelNetwork _network;
 
-        public DesСontext(byte[] key,Mode mode, params object[] options) 
-        { 
-            _key = key;
+        #region Nested
+
+        public enum Mode
+        {
+            ECB,
+            CBC,
+            CFB,
+            OFB,
+            CTR,
+            RD,
+            RDH
+        };
+
+        #endregion
+
+        private readonly ICrypto _crypto;
+        private readonly Mode _mode;
+        public CipherСontext(ICrypto crypto, Mode mode = Mode.ECB) 
+        {
+            _crypto = crypto ?? throw new ArgumentNullException(nameof(crypto));
             _mode = mode;
-            _network = new FeistelNetwork(new KeyGenerator(), new FeistelFunc(), _key);
         }
 
         public byte[] Encrypt(byte[] Indata) 
         {
-
-
             var eIndata = new byte[Indata.Length + 8- (Indata.Length % 8)];
             byte[] Outdata = new byte[eIndata.Length];
             int lastind=0;
@@ -42,6 +43,11 @@ namespace MyDES
                 eIndata[lastind] = Indata[lastind]; 
             }
             eIndata[lastind]=(byte)0x80;
+
+            // TODO: Parallel!!!, ThreadPool, Thread
+
+            // TODO: почитай про Task.WhenAll
+            // TODO: Task.Run, Task.Factory.StartNew
 
             switch (_mode)
             {
@@ -57,7 +63,9 @@ namespace MyDES
                             if (posinblock == 8)
                             {
                                 posinblock = 0;
-                                block = _network.Encrypt(block);
+
+                                block = _crypto.Encrypt(block);
+
                                 foreach (byte b in block)
                                 {
                                     Outdata[posinOutData]=b;
@@ -114,7 +122,7 @@ namespace MyDES
                             if (posinblock == 8)
                             {
                                 posinblock = 0;
-                                block = _network.Decrypt(block);
+                                block = _crypto.Decrypt(block);
                                 foreach (byte b in block)
                                 {
                                     Outdata[posinoutdata++] = b;
@@ -147,19 +155,26 @@ namespace MyDES
 
         public byte[] CutTail(byte[] data)
         {
-           
             int i;
-            for ( i= data.Length-1; i >=0; i--)
+            for (i = data.Length - 1; i >= 0; i--)
             {
-                if(data[i] == (byte)0x80)
+                if (data[i] == (byte)0x80)
                 {
-                    
                     break;
                 }
             }
+
+            if (i == -1)
+            {
+                return data;
+            }
+            
             byte[] outdata = new byte[i];
-            for (int j = 0; j < i;j++)
+            for (int j = 0; j < i; j++)
+            {
                 outdata[j] = data[j];
+            }
+
             return outdata;
         }
 
